@@ -1,3 +1,4 @@
+import re
 import requests
 
 from subprocess import check_output
@@ -30,16 +31,28 @@ def get_repo_name() -> str:
     return repo_name
 
 
-def get_reservation_list() -> dict:
-    """
-    Will get the repository name then request all the issues and put them in a dict
-    """
-    # Gets the issues into a dict
-    issues = requests.get(
-        "https://api.github.com/repos/" + get_repo_name() + "/issues"
-    ).json()
-    # Creates the issue dict with the name and the login
-    reservations: dict = {
-        issue["title"].split()[-1].lower(): issue["user"]["login"] for issue in issues
-    }
+def get_reservation_list():
+    resp = requests.get(
+        "https://api.github.com/repos/" + get_repo_name() + "/issues?state=open"
+    )
+    issues = resp.json()
+
+    try:
+        resp.headers['Link']
+    except KeyError:
+        pass
+    else:
+        last_page = re.search(r"\w\>\;\ rel\=\"last\"", resp.headers['Link']).group().split(">")[0]
+        for page in range(2, int(last_page) + 1):
+            resp = requests.get(
+                "https://api.github.com/repos/" + "python/python-docs-fr" + "/issues?state=open&page={}".format(page)
+            )
+            issues + resp.json()
+
+    reservations = {}
+
+    for issue in issues:
+        if yes := re.search(r'\w*/\w*\.po', issue['title']):
+            reservations[yes.group()] = issue['user']['login']
+
     return reservations
