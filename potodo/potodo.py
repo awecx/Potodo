@@ -17,8 +17,7 @@ from potodo._github import get_reservation_list
 from potodo._po_file import PoFile
 
 
-# def initialize_arguments(above: int, below: int, matching_files: bool, offline: bool, hide_reserved: bool):
-def initialize_arguments(above: int, below: int, offline: bool, hide_reserved: bool):
+def initialize_arguments(above: int, below: int, matching_files: bool, offline: bool, hide_reserved: bool):
     if not above:
         above = 0
     if not below:
@@ -28,11 +27,7 @@ def initialize_arguments(above: int, below: int, offline: bool, hide_reserved: b
         if below < above:
             raise ValueError("Below must be inferior to above")
 
-    # if not matching_files and not offline and not hide_reserved:
-    #     issue_reservations = get_reservation_list()
-    # else:
-    #     issue_reservations = []
-    if not offline and not hide_reserved:
+    if not matching_files and not offline and not hide_reserved:
         issue_reservations = get_reservation_list()
     else:
         issue_reservations = []
@@ -45,16 +40,16 @@ def print_dir_stats(directory_name: str, buffer: list, folder_stats: list, print
         print("\n".join(buffer))
 
 
-# def print_matching_files(directory_name: str, po_files: list, fuzzy: bool):
-#     for po_file in po_files:
-#         po_file_stats = po_file.pofile
-#         if fuzzy:
-#             if len(po_file_stats.fuzzy_entries()) > 0:
-#                 print(directory_name + "/" + po_file.filename)
-#             else:
-#                 continue
-#         else:
-#             print(directory_name + "/" + po_file.filename)
+def print_matching_files(directory_name: str, po_files: list, fuzzy: bool):
+    for po_file in po_files:
+        po_file_stats = po_file.pofile
+        if fuzzy:
+            if len(po_file_stats.fuzzy_entries()) > 0:
+                print(directory_name + "/" + po_file.filename)
+            else:
+                continue
+        else:
+            print(directory_name + "/" + po_file.filename)
 
 
 def buffer_add(buffer: list, folder_stats: list, printed_list: list, po_file: PoFile, issue_reservations: dict, directory_name: str, above: int, below: int):
@@ -105,7 +100,7 @@ def exec_potodo(
     path: str,
     above: int,
     below: int,
-    # matching_files: bool,
+    matching_files: bool,
     fuzzy: bool,
     offline: bool,
     hide_reserved: bool,
@@ -116,22 +111,21 @@ def exec_potodo(
     :param path: The path to search into
     :param above: The above threshold
     :param below: The below threshold
-    # :param matching_files: Should the file paths be printed instead of normal output
+    :param matching_files: Should the file paths be printed instead of normal output
     :param fuzzy: Should only fuzzies be printed
     :param offline: Will not connect to internet
     :param hide_reserved: Will not show the reserved files
     """
 
-    # above, below, issue_reservations = initialize_arguments(above, below, matching_files, offline, hide_reserved)
-    above, below, issue_reservations = initialize_arguments(above, below, offline, hide_reserved)
+    above, below, issue_reservations = initialize_arguments(above, below, matching_files, offline, hide_reserved)
 
     from potodo._po_file import get_po_files_from_repo
 
     po_files_and_dirs = get_po_files_from_repo(path)
 
     for directory_name, po_files in sorted(po_files_and_dirs.items()):
-        # if matching_files:
-        #     print_matching_files(directory_name, po_files, fuzzy)
+        if matching_files:
+            print_matching_files(directory_name, po_files, fuzzy)
         buffer = []
         folder_stats = []
         printed_list = []
@@ -159,15 +153,13 @@ def main():
         "-p", "--path", type=Path, help="Execute Potodo in the given path"
     )
 
-    # Removed as it needs to be refactored
-
-    # parser.add_argument(
-    #     "-l",
-    #     "--matching-files",
-    #     action="store_true",
-    #     help="Suppress normal output; instead print the name of each matching po file from which output would normally "
-    #     "have been printed.",
-    # )
+    parser.add_argument(
+        "-l",
+        "--matching-files",
+        action="store_true",
+        help="Suppress normal output; instead print the name of each matching po file from which output would normally "
+        "have been printed.",
+    )
 
     parser.add_argument(
         "-f",
@@ -213,7 +205,7 @@ def main():
         path,
         args.above,
         args.below,
-        # args.matching_files,
+        args.matching_files,
         args.fuzzy,
         args.offline,
         args.no_reserved,
