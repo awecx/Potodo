@@ -14,6 +14,7 @@ except ImportError:
     print("You need to install polib and requests to be able to run potodo.")
     sys.exit(1)
 
+from potodo import __version__
 from potodo._github import get_reservation_list
 
 
@@ -52,7 +53,7 @@ def exec_potodo(
     :param above: The above threshold
     :param below: The below threshold
     :param matching_files: Should the file paths be printed instead of normal output
-    :param fuzzy: Should only fuzzys be printed
+    :param fuzzy: Should only fuzzies be printed
     :param offline: Will not connect to internet
     :param hide_reserved: Will not show the reserved files
     """
@@ -209,6 +210,8 @@ def main():
         type=int,
         help="Will list all TODOs BELOW given INT%% completion",
     )
+
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 
     args = parser.parse_args()
     if not args.path:
