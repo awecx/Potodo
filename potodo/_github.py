@@ -32,25 +32,20 @@ def get_repo_name() -> str:
 
 
 def get_reservation_list():
-    resp = requests.get(
-        "https://api.github.com/repos/" + get_repo_name() + "/issues?state=open"
-    )
-    issues = resp.json()
 
-    if resp.headers.get('Link'):
-        link = resp.headers.get('Link')
-        last_page = link.split(">")[0]
-        for page in range(2, int(last_page) + 1):
-            resp = requests.get(
-                "https://api.github.com/repos/" + "python/python-docs-fr" + "/issues?state=open&page={}".format(page)
-            )
-            issues + resp.json()
+    issues: list = []
+    next = "https://api.github.com/repos/" + get_repo_name() + "/issues?state=open"
+    while next:
+        resp = requests.get(next)
+        issues += issues
+        next = resp.links.get("next", {}).get("url")
 
     reservations = {}
 
     for issue in issues:
         # Maybe find a better way for not using python 3.8 ?
-        if yes := re.search(r'\w*/\w*\.po', issue['title']):
+        if re.search(r'\w*/\w*\.po', issue['title']):
+            yes = re.search(r'\w*/\w*\.po', issue['title'])
             reservations[yes.group()] = issue['user']['login']
 
     return reservations
