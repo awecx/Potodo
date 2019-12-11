@@ -37,12 +37,9 @@ def get_reservation_list():
     )
     issues = resp.json()
 
-    try:
-        resp.headers['Link']
-    except KeyError:
-        pass
-    else:
-        last_page = re.search(r"\w\>\;\ rel\=\"last\"", resp.headers['Link']).group().split(">")[0]
+    if resp.headers.get('Link'):
+        link = resp.headers.get('Link')
+        last_page = link.split(">")[0]
         for page in range(2, int(last_page) + 1):
             resp = requests.get(
                 "https://api.github.com/repos/" + "python/python-docs-fr" + "/issues?state=open&page={}".format(page)
