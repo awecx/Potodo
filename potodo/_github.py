@@ -49,6 +49,7 @@ def get_reservation_list():
     reservations = {}
 
     for issue in issues:
+        # Maybe find a better way for not using python 3.8 ?
         if yes := re.search(r'\w*/\w*\.po', issue['title']):
             reservations[yes.group()] = issue['user']['login']
 
