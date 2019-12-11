@@ -65,6 +65,7 @@ def buffer_add(
     issue_reservations: dict,
     above: int,
     below: int,
+    counts: bool
 ) -> Tuple[list, list, list]:
     """
     Will add to the buffer the information to print about the file is the file isn't translated entirely or above or below requested values
@@ -99,22 +100,38 @@ def buffer_add(
         # End the function call without adding anything to the buffer
         return buffer, folder_stats, printed_list
 
-    buffer.append(
-        # The filename
-        f"- {po_file.filename:<30} "
-        # The number of entries translated / the file size
-        + f"{po_file.translated_nb:3d} / {po_file.po_file_size:3d} "
-        # The percent of the file translated
-        + f"({po_file.percent_translated:5.1f}% translated)"
-        # The fuzzies in the file IF fuzzies exists in the file
-        + (f", {po_file.fuzzy_nb} fuzzy" if po_file.fuzzy_entries else "")
-        # The `reserved by` if the file is reserved unless if the offline/hide_reservation are enabled
-        + (
-            f", réservé par {issue_reservations[po_file.filename_dir.lower()]}"
-            if po_file.filename_dir.lower() in issue_reservations
-            else ""
+    if not counts:
+        buffer.append(
+            # The filename
+            f"- {po_file.filename:<30} "
+            # The number of entries translated / the file size
+            + f"{po_file.translated_nb:3d} / {po_file.po_file_size:3d} "
+            # The percent of the file translated
+            + f"({po_file.percent_translated:5.1f}% translated)"
+            # The fuzzies in the file IF fuzzies exists in the file
+            + (f", {po_file.fuzzy_nb} fuzzy" if po_file.fuzzy_entries else "")
+            # The `reserved by` if the file is reserved unless if the offline/hide_reservation are enabled
+            + (
+                f", réservé par {issue_reservations[po_file.filename_dir.lower()]}"
+                if po_file.filename_dir.lower() in issue_reservations
+                else ""
+            )
         )
-    )
+    else:
+        todonum = len(po_file.fuzzy_entries) + len(po_file.untranslated_entries)
+        buffer.append(
+            # The filename
+            f"- {po_file.filename:<30} "
+            + f"{todonum:3d} to do"
+            # The fuzzies in the file IF fuzzies exists in the file
+            + (f", including {po_file.fuzzy_nb} fuzzies." if po_file.fuzzy_entries else "")
+            # The `reserved by` if the file is reserved unless if the offline/hide_reservation are enabled
+            + (
+                f", réservé par {issue_reservations[po_file.filename_dir.lower()]}"
+                if po_file.filename_dir.lower() in issue_reservations
+                else ""
+            )
+        )
     # Add the percent translated to the folder statistics
     folder_stats.append(po_file.percent_translated)
     # Indicate to print the file
@@ -124,7 +141,7 @@ def buffer_add(
     return buffer, folder_stats, printed_list
 
 
-def exec_potodo(path: str, above: int, below: int, fuzzy: bool, offline: bool, hide_reserved: bool):
+def exec_potodo(path: str, above: int, below: int, fuzzy: bool, offline: bool, hide_reserved: bool, counts: bool):
     """
     Will run everything based on the given parameters
 
@@ -155,14 +172,14 @@ def exec_potodo(path: str, above: int, below: int, fuzzy: bool, offline: bool, h
                 # Ignore files without fuzzies
                 if len(po_file.fuzzy_entries) > 0:
                     buffer, folder_stats, printed_list = buffer_add(
-                        buffer, folder_stats, printed_list, po_file, issue_reservations, above, below
+                        buffer, folder_stats, printed_list, po_file, issue_reservations, above, below, counts
                     )
                 else:
                     pass
             else:
                 # All files, with and without fuzzies
                 buffer, folder_stats, printed_list = buffer_add(
-                    buffer, folder_stats, printed_list, po_file, issue_reservations, above, below
+                    buffer, folder_stats, printed_list, po_file, issue_reservations, above, below, counts
                 )
         # Once all files have been processed, print the dir and the files
         print_dir_stats(directory_name, buffer, folder_stats, printed_list)
@@ -182,6 +199,8 @@ def main():
     parser.add_argument("-a", "--above", type=int, help="Will list all TODOs ABOVE given INT%% completion")
     parser.add_argument("-b", "--below", type=int, help="Will list all TODOs BELOW given INT%% completion")
 
+    parser.add_argument("-c", "--counts", action="store_true", help="Render list with count of entries to do (translate or review) instead of percent done")
+
     args = parser.parse_args()
     # If no path is specified, then use the current path
     if not args.path:
@@ -189,4 +208,4 @@ def main():
     else:
         path = str(args.path)
 
-    exec_potodo(path, args.above, args.below, args.fuzzy, args.offline, args.no_reserved)
+    exec_potodo(path, args.above, args.below, args.fuzzy, args.offline, args.no_reserved, args.counts)
