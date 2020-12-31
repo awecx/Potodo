@@ -1,0 +1,7 @@
+#: /un/chemin/idiot.rst:333
+msgid "This is a dummy sentence."                                   
+msgstr "Ceci est une phrase bateau."
+
+#: /un/chemin/idiot.rst:666
+msgid "We should also translate this eventually"
+msgstr ""

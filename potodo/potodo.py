@@ -53,7 +53,7 @@ def add_dir_stats(
         folder_completion = 100 * folder_stats["translated"] / folder_stats["total"]
         all_stats.append(
             dict(
-                name=f"{directory_name}/",
+                name=f"{directory_name}",
                 percent_translated=float(f"{folder_completion:.2f}"),
                 files=buffer,
             )
@@ -272,7 +272,7 @@ def buffer_add(
     if only_reserved and not reserved_by:
         return
 
-    directory = po_file_stats.directory
+    name = po_file_stats.name
     filename = po_file_stats.filename
     path = po_file_stats.path
 
@@ -283,7 +283,7 @@ def buffer_add(
 
         # the order of the keys is the display order
         d = dict(
-            name=f"{directory}/{filename.replace('.po', '')}",
+            name=name,
             path=str(path),
             entries=po_file_size,
             fuzzies=fuzzy_nb,

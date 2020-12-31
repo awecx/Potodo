@@ -16,10 +16,12 @@ import polib
 class PoFileStats:
     """Class for each `.po` file containing all the necessary information about its progress"""  # noqa
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, repo_path: Path):
         """Initializes the class with all the correct information"""
         self.path: Path = path
         self.filename: str = path.name
+        # File name without '.po' extension, nor repository path, e.g. 'library/os'
+        self.name: str = str(path.with_suffix("")).replace(str(repo_path), "")
         self.mtime = os.path.getmtime(path)
         self.pofile: polib.POFile = polib.pofile(self.path)
         self.directory: str = self.path.parent.name
@@ -100,7 +102,8 @@ def get_po_stats_from_repo_or_cache(
         # We assume the output of rglob to be sorted,
         # so each 'name' is unique within groupby
         for name, files in itertools.groupby(
-            all_po_files, key=lambda path: path.parent.name
+            all_po_files,
+            key=lambda path: (str(path.parent) + "/").replace(str(repo_path), ""),
         )
     }
 
@@ -108,7 +111,7 @@ def get_po_stats_from_repo_or_cache(
         # Turn paths into stat objects
         logging.debug("Creating PoFileStats objects for each file without cache")
         po_stats_per_directory: Dict[str, List[PoFileStats]] = {
-            directory: [PoFileStats(po_file) for po_file in po_files]
+            directory: [PoFileStats(po_file, repo_path) for po_file in po_files]
             for directory, po_files in po_files_per_directory.items()
         }
     else:
@@ -124,7 +127,9 @@ def get_po_stats_from_repo_or_cache(
                     cached_file
                     and os.path.getmtime(po_file.resolve()) == cached_file.mtime
                 ):
-                    cached_files[po_file.resolve()] = cached_file = PoFileStats(po_file)
+                    cached_files[po_file.resolve()] = cached_file = PoFileStats(
+                        po_file, repo_path
+                    )
                 po_stats_per_directory[directory].append(cached_file)
         set_cache_content(
             cached_files,

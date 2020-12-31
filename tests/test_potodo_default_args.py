@@ -29,7 +29,7 @@ class TestPotodoCLI:
     excluded_2 = str(config["exclude"][1])
 
     def test_potodo_no_args(self):
-        output = check_output("potodo").decode("utf-8")
+        output = check_output("python -m potodo", shell=True, cwd="/home/antoine/github/Potodo/tests/fixtures/repository").decode("utf-8")
         assert "# excluded (50.00% done)" in output
         assert "# folder (33.33% done)" in output
         assert (
